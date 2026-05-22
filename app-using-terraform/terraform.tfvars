@@ -1,0 +1,11 @@
+username              = "admin"
+password              = "admin123"
+server_addr           = "localhost:8080"
+namespace             = "argocd"
+repo_url              = "https://github.com/kalpitmalviya/argo.git"
+path                  = "argocd-applications-01/helm/nginx"
+target_revision       = "main"
+values_files          = ["test-values.yaml"]
+destination_namespace = "terraform"
+destination_server    = "https://kubernetes.default.svc"
+insecure              = true
