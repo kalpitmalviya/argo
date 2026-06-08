@@ -1,20 +1,25 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+# ArgoCD Application manifest - defines how ArgoCD should deploy an application
+apiVersion: argoproj.io/v1alpha1   # ArgoCD's custom API group and version
+kind: Application                   # Resource type: an ArgoCD Application
+
 metadata:
-  name: app-from-scratch
+  name: app-from-scratch            # Name of this ArgoCD Application resource in the cluster
 
 spec:
-  project: default
+  project: default                  # ArgoCD project this app belongs to (controls permissions/restrictions)
 
+  # SOURCE: Where ArgoCD pulls the application manifests from
   source:
-    helm:
-      releaseName: application-from-helm
-      valueFiles:
-      - test-values.yaml
-    repoURL: https://github.com/kalpitmalviya/argo.git
-    targetRevision: main
-    path: argocd-applications-01/helm/nginx
+    repoURL: https://github.com/kalpitmalviya/argo.git  # Git repository containing the app config
+    targetRevision: main                                  # Git branch/tag/commit to track and sync from
+    path: argocd-applications-01/helm/nginx              # Path within the repo where the Helm chart lives
 
+    helm:                                        # Helm-specific configuration
+      releaseName: application-from-helm         # Name given to the Helm release when deployed
+      valueFiles:
+        - test-values.yaml                       # Custom values file (relative to chart path) to override chart defaults
+
+  # DESTINATION: Where ArgoCD should deploy the application
   destination:
-    server: https://kubernetes.default.svc
-    namespace: default
+    server: https://kubernetes.default.svc       # Target cluster API server (this value = same cluster ArgoCD runs in)
+    namespace: default                           # Kubernetes namespace to deploy resources into
