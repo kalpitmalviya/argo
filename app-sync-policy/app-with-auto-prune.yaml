@@ -1,0 +1,42 @@
+# ArgoCD Application CRD version
+apiVersion: argoproj.io/v1alpha1
+
+# Resource type
+kind: Application
+
+metadata:
+  # Name of the ArgoCD application
+  name: app-with-sync
+
+spec:
+  # Sync policy configuration
+  syncPolicy:
+    automated:
+      # Automatically delete resources from cluster
+      # if they are removed from Git
+      prune: true
+
+      # If enabled, ArgoCD automatically syncs changes
+      # selfHeal: true
+
+  # ArgoCD project name
+  # default project allows all repositories/clusters by default
+  project: default
+
+  source:
+    # Git repository URL containing Kubernetes manifests/Helm chart
+    repoURL: https://github.com/kalpitmalviya/argo.git
+
+    # Git branch/tag/commit to track
+    targetRevision: main
+
+    # Path inside repository where manifests/chart exists
+    path: argocd-applications-01/helm/nginx
+
+  destination:
+    # Kubernetes API server
+    # kubernetes.default.svc means current cluster
+    server: https://kubernetes.default.svc
+
+    # Namespace where application will be deployed
+    namespace: default
