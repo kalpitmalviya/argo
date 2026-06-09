@@ -1,0 +1,46 @@
+# ArgoCD Application CRD API version
+apiVersion: argoproj.io/v1alpha1
+
+# Resource type
+kind: Application
+
+metadata:
+  # Name of the ArgoCD application
+  name: app-with-self-heal
+
+spec:
+  # Synchronization settings
+  syncPolicy:
+    automated:
+      # Automatically fixes drift if someone manually changes
+      # or deletes Kubernetes resources in the cluster
+      #
+      # Example:
+      # If replica count is changed manually using kubectl,
+      # ArgoCD will revert it back to Git state automatically
+      selfHeal: true
+
+      # Optional:
+      # prune removes resources deleted from Git
+      # prune: true
+
+  # ArgoCD project name
+  project: default
+
+  source:
+    # Git repository containing manifests/Helm chart
+    repoURL: https://github.com/kalpitmalviya/argo.git
+
+    # Branch/tag/commit ArgoCD should track
+    targetRevision: main
+
+    # Folder path inside repository
+    path: argocd-applications-01/helm/nginx
+
+  destination:
+    # Target Kubernetes cluster
+    # kubernetes.default.svc means current cluster
+    server: https://kubernetes.default.svc
+
+    # Namespace where resources will be deployed
+    namespace: default
