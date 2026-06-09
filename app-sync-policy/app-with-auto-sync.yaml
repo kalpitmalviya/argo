@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-with-sync
+
+spec:
+  syncPolicy:
+    automated:
+      enabled: true
+  project: default
+
+  source:
+    repoURL: https://github.com/kalpitmalviya/argo.git
+    targetRevision: main
+    path: argocd-applications-01/helm/nginx
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
