@@ -1,0 +1,110 @@
+# Argo Workflow API version
+apiVersion: argoproj.io/v1alpha1
+
+# Resource type
+kind: Workflow
+
+metadata:
+  # Automatically generates workflow names like:
+  # argo-wf-abcde
+  generateName: argo-wf-
+
+spec:
+  # ServiceAccount used by the workflow pods
+  # Must have required permissions to create resources, run pods, etc.
+  serviceAccountName: argo-workflow
+
+  # Starting template of the workflow
+  entrypoint: steps-template
+
+  templates:
+
+  # Main workflow definition using step-based execution
+  - name: steps-template
+    steps:
+
+    # Step 1: Run container-template
+    # Executes first
+    - - name: step1
+        template: container-template
+
+    # Step 2A and Step 2B execute in parallel
+    # because they are in the same step group
+    - - name: step2a
+        template: script-template
+
+      - name: step2b
+        template: resource-template
+
+    # Step 3 executes only after
+    # both step2a and step2b complete successfully
+    - - name: step3
+        template: suspend-template
+
+  # ------------------------------------------------------------------------
+  # Container Template
+  # Runs a simple Alpine container
+  # ------------------------------------------------------------------------
+  - name: container-template
+    container:
+      image: alpine
+
+      # Execute shell command
+      command: ["/bin/sh", "-c"]
+
+      # Print message to pod logs
+      args:
+        - "echo hello from container!!"
+
+  # ------------------------------------------------------------------------
+  # Script Template
+  # Runs inline Python code
+  # ------------------------------------------------------------------------
+  - name: script-template
+    script:
+      image: python:3.12-slim
+
+      # Python interpreter
+      command: ["python"]
+
+      # Inline script executed inside the container
+      source: |
+        import random
+
+        # Generate random number between 1 and 10
+        i = random.randint(1, 10)
+
+        print(f"Random Number: {i}")
+
+  # ------------------------------------------------------------------------
+  # Resource Template
+  # Creates a Kubernetes resource dynamically
+  # ------------------------------------------------------------------------
+  - name: resource-template
+    resource:
+
+      # Kubernetes operation
+      action: create
+
+      # Resource manifest to create
+      manifest: |
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          # Auto-generated ConfigMap name
+          generateName: argo-wf-resource-template-cm-
+
+        data:
+          # Example key/value pair
+          created_by: argo-workflows
+
+  # ------------------------------------------------------------------------
+  # Suspend Template
+  # Pauses workflow execution
+  # ------------------------------------------------------------------------
+  - name: suspend-template
+    suspend:
+
+      # Workflow waits here for 20 seconds
+      # before completing
+      duration: "20s"
