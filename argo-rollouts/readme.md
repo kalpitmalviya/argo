@@ -75,6 +75,29 @@ kubectl argo rollouts abort blue-green-demo -n demo
 kubectl argo rollouts undo blue-green-demo -n demo
 ```
 
+## Viewing on the UI
+
+### Argo Rollouts Dashboard
+```bash
+# Launch the local dashboard (opens http://localhost:3100)
+kubectl argo rollouts dashboard -n demo
+```
+Navigate to **http://localhost:3100** → select namespace `demo` → click **blue-green-demo**.
+
+You will see:
+- Active (Blue) and Preview (Green) ReplicaSets with pod counts
+- Rollout phase and step status
+- Promote / Abort buttons for manual control
+- Live analysis run results
+
+### Argo CD UI (if the app is managed by Argo CD)
+```bash
+# Port-forward the Argo CD server
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+Open **https://localhost:8080** → find the app synced to this rollout.  
+The resource tree shows the Rollout, active/preview Services, and ReplicaSets in real time.
+
 ## Key Rollout fields explained
 
 | Field | Value | Meaning |
@@ -161,6 +184,29 @@ kubectl argo rollouts promote canary-demo -n demo
 kubectl argo rollouts abort canary-demo -n demo
 kubectl argo rollouts undo canary-demo -n demo
 ```
+
+## Viewing on the UI
+
+### Argo Rollouts Dashboard
+```bash
+# Launch the local dashboard (opens http://localhost:3100)
+kubectl argo rollouts dashboard -n demo
+```
+Navigate to **http://localhost:3100** → select namespace `demo` → click **canary-demo**.
+
+You will see:
+- Stable and Canary ReplicaSets with current pod counts
+- Current step number and traffic weight (e.g. 10% → 30% → 60%)
+- Active AnalysisRun status and metric results
+- Promote / Abort buttons for manual gate control
+
+### Argo CD UI (if the app is managed by Argo CD)
+```bash
+# Port-forward the Argo CD server
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+Open **https://localhost:8080** → find the app synced to this rollout.  
+The resource tree shows the Rollout, stable/canary Services, Ingress weight annotations, and AnalysisRuns updating live.
 
 ## Key Rollout fields explained (Canary)
 
