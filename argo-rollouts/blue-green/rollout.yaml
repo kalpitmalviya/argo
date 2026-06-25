@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: blue-green-demo
+  namespace: demo
+spec:
+  replicas: 3
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: blue-green-demo
+  template:
+    metadata:
+      labels:
+        app: blue-green-demo
+    spec:
+      containers:
+        - name: app
+          image: argoproj/rollouts-demo:blue
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+  strategy:
+    blueGreen:
+      # activeService routes live traffic (Blue)
+      activeService: blue-green-demo-active
+      # previewService routes test traffic (Green)
+      previewService: blue-green-demo-preview
+      # Require manual promotion — set to false for automatic promotion
+      autoPromotionEnabled: false
+      # How long to wait before auto-promoting (only used when autoPromotionEnabled: true)
+      autoPromotionSeconds: 30
+      # Keep old (Blue) ReplicaSet running for this long after promotion
+      scaleDownDelaySeconds: 30
+      # Run pre-promotion analysis before switching traffic
+      prePromotionAnalysis:
+        templates:
+          - templateName: success-rate
+        args:
+          - name: service-name
+            value: blue-green-demo-preview
+      # Run post-promotion analysis after switching traffic
+      postPromotionAnalysis:
+        templates:
+          - templateName: success-rate
+        args:
+          - name: service-name
+            value: blue-green-demo-active
