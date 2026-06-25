@@ -193,6 +193,7 @@ kubectl argo rollouts undo canary-demo -n demo
 kubectl argo rollouts dashboard -n demo
 ```
 Navigate to **http://localhost:3100** → select namespace `demo` → click **canary-demo**.
+<img width="3024" height="1654" alt="image" src="https://github.com/user-attachments/assets/6c544f7b-6d0d-4dcf-9d09-8e6fdd9d630d" />
 
 You will see:
 - Stable and Canary ReplicaSets with current pod counts
