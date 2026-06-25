@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blue-green-demo
+  namespace: demo
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: demo.example.com
+      http:
+        paths:
+          # Production traffic → active service (Blue)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blue-green-demo-active
+                port:
+                  number: 80
+    - host: preview.demo.example.com
+      http:
+        paths:
+          # Test/preview traffic → preview service (Green)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blue-green-demo-preview
+                port:
+                  number: 80

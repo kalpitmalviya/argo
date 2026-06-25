@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: demo
+spec:
+  args:
+    # Passed in from the Rollout's prePromotionAnalysis / postPromotionAnalysis
+    - name: service-name
+  metrics:
+    - name: success-rate
+      # Run the query every 30 seconds
+      interval: 30s
+      # Fail immediately if the success rate drops below 95%
+      failureCondition: result[0] < 0.95
+      # Mark as successful once 3 consecutive measurements pass
+      successCondition: result[0] >= 0.95
+      count: 3
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            sum(
+              rate(
+                http_requests_total{
+                  service="{{args.service-name}}",
+                  status!~"5.."
+                }[2m]
+              )
+            )
+            /
+            sum(
+              rate(
+                http_requests_total{
+                  service="{{args.service-name}}"
+                }[2m]
+              )
+            )

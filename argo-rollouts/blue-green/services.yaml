@@ -1,0 +1,44 @@
+---
+# Active Service — receives all live production traffic (Blue)
+# The rollout controller updates this service's selector to point
+# to the current stable ReplicaSet after a successful promotion.
+apiVersion: v1
+kind: Service
+metadata:
+  name: blue-green-demo-active
+  namespace: demo
+  labels:
+    app: blue-green-demo
+    role: active
+spec:
+  selector:
+    app: blue-green-demo
+    # The rollout controller injects:
+    #   rollouts-pod-template-hash: <hash-of-stable-rs>
+    # No need to set it here — the controller manages it.
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP
+
+---
+# Preview Service — receives traffic for testing the new (Green) version
+# Only the new ReplicaSet pods are reachable via this service during
+# the pre-promotion phase.
+apiVersion: v1
+kind: Service
+metadata:
+  name: blue-green-demo-preview
+  namespace: demo
+  labels:
+    app: blue-green-demo
+    role: preview
+spec:
+  selector:
+    app: blue-green-demo
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP
