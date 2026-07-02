@@ -1,0 +1,144 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: argo-wf-
+spec:
+  entrypoint: dag-template
+  serviceAccountName: argo-workflow
+
+  arguments:
+    parameters:
+      - name: message
+        value: "Hello from Argo Workflow!"
+
+  templates:
+
+  ####################################################
+  # DAG Template
+  ####################################################
+  - name: dag-template
+    dag:
+      tasks:
+
+        # Task A
+        - name: A
+          template: container-template
+          arguments:
+            parameters:
+              - name: message
+                value: "{{workflow.parameters.message}}"
+
+        # Task B
+        - name: B
+          template: script-template
+          dependencies:
+            - A
+
+        # Task C
+        - name: C
+          template: resource-template
+          dependencies:
+            - A
+            - B
+
+        # Task D
+        - name: D
+          template: script-template-new
+          dependencies:
+            - B
+            - C
+          arguments:
+            artifacts:
+              - name: random_number_in
+                from: "{{tasks.B.outputs.artifacts.random_number_out}}"
+
+        # Task E
+        - name: E
+          template: suspend-template
+          dependencies:
+            - A
+            - B
+            - C
+            - D
+
+  ####################################################
+  # Container Template
+  ####################################################
+  - name: container-template
+    inputs:
+      parameters:
+        - name: message
+
+    container:
+      image: alpine:latest
+      command:
+        - /bin/sh
+        - -c
+      args:
+        - |
+          echo "Message received:"
+          echo "{{inputs.parameters.message}}"
+
+  ####################################################
+  # Generate Random Number
+  ####################################################
+  - name: script-template
+    outputs:
+      artifacts:
+        - name: random_number_out
+          path: /tmp/random_number.txt
+
+    script:
+      image: python:3.12-slim
+      command:
+        - python
+      source: |
+        import random
+
+        number = random.randint(1, 100)
+
+        print(f"Generated number: {number}")
+
+        with open("/tmp/random_number.txt", "w") as f:
+            f.write(str(number))
+
+  ####################################################
+  # Read Artifact
+  ####################################################
+  - name: script-template-new
+    inputs:
+      artifacts:
+        - name: random_number_in
+          path: /tmp/random_number.txt
+
+    script:
+      image: python:3.12-slim
+      command:
+        - python
+      source: |
+        with open("/tmp/random_number.txt", "r") as f:
+            number = f.read().strip()
+
+        print(f"Received random number: {number}")
+
+  ####################################################
+  # Create ConfigMap
+  ####################################################
+  - name: resource-template
+    resource:
+      action: create
+      manifest: |
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          generateName: argo-resource-
+        data:
+          created_by: argo-workflows
+          purpose: demo
+
+  ####################################################
+  # Suspend
+  ####################################################
+  - name: suspend-template
+    suspend:
+      duration: "20s"
